@@ -1,9 +1,9 @@
-import sys
-import os
+import sys, os
 sys.path.append(os.path.dirname(__file__))
 
 import streamlit as st
 from metaai_api import MetaAI
+
 
 st.set_page_config(
     page_title="MetaAI Streamlit (Vendored)",
