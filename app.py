@@ -2,14 +2,14 @@ import streamlit as st
 from metaai_api import MetaAI
 
 st.set_page_config(
-    page_title="MetaAI Streamlit",
+    page_title="MetaAI Streamlit (Vendored)",
     layout="centered"
 )
 
-st.title("🤖 MetaAI – Chat & Video Generator")
+st.title("🤖 MetaAI – Chat & Video Generator (Stable)")
 
 # ===============================
-# AMBIL COOKIES DARI SECRETS
+# LOAD COOKIES FROM SECRETS
 # ===============================
 try:
     cookies = {
@@ -23,42 +23,41 @@ except Exception:
     st.stop()
 
 # ===============================
-# INIT META AI (ONCE)
+# INIT META AI (CACHE)
 # ===============================
 @st.cache_resource
-def init_meta_ai():
+def load_meta_ai():
     return MetaAI(cookies=cookies)
 
-ai = init_meta_ai()
-
-st.success("✅ MetaAI berhasil di-initialize")
+ai = load_meta_ai()
+st.success("✅ MetaAI berhasil dimuat (Vendored Mode)")
 
 # ===============================
-# CHAT SECTION
+# CHAT
 # ===============================
-st.subheader("💬 Chat dengan MetaAI")
+st.subheader("💬 Chat")
 
 chat_prompt = st.text_area(
-    "Masukkan pertanyaan",
+    "Prompt Chat",
     value="What's the weather in San Francisco?"
 )
 
 if st.button("Kirim Chat"):
-    with st.spinner("Mengirim ke MetaAI..."):
+    with st.spinner("Menghubungi MetaAI..."):
         try:
-            chat = ai.prompt(chat_prompt, stream=False)
-            st.success("✅ Chat Response")
-            st.write(chat["message"])
+            result = ai.prompt(chat_prompt, stream=False)
+            st.success("Response")
+            st.write(result["message"])
         except Exception as e:
-            st.error(f"❌ Chat Error: {e}")
+            st.error(f"Chat Error: {e}")
 
 # ===============================
-# VIDEO GENERATION
+# VIDEO
 # ===============================
 st.subheader("🎥 Generate Video")
 
 video_prompt = st.text_input(
-    "Prompt video",
+    "Prompt Video",
     value="Generate a video of a sunset over mountains"
 )
 
@@ -68,17 +67,15 @@ if st.button("Generate Video"):
             video = ai.generate_video(video_prompt)
 
             if video.get("success"):
-                st.success("✅ Video berhasil dibuat")
+                st.success("Video berhasil dibuat")
                 st.write("Conversation ID:", video["conversation_id"])
 
                 for i, url in enumerate(video["video_urls"], 1):
                     st.markdown(f"**{i}.** [Buka Video]({url})")
-
             else:
-                st.warning("⚠️ Video masih diproses atau URL belum tersedia")
-
+                st.warning("Video masih diproses (belum ada URL)")
         except Exception as e:
-            st.error(f"❌ Video Error: {e}")
+            st.error(f"Video Error: {e}")
 
 st.divider()
-st.caption("Running on Streamlit Cloud")
+st.caption("Vendored MetaAI • Streamlit Cloud Safe")
