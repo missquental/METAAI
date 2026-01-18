@@ -1,85 +1,71 @@
-import sys, os
-sys.path.append(os.path.dirname(__file__))
-
 import streamlit as st
-from metaai_api import MetaAI
+from metaai_wrapper import MetaAIWrapper
 
+st.set_page_config("MetaAI Cloud", layout="centered")
+st.title("🤖 MetaAI – Cloud Safe")
 
-st.set_page_config(
-    page_title="MetaAI Streamlit (Vendored)",
-    layout="centered"
-)
-
-st.title("🤖 MetaAI – Chat & Video Generator (Stable)")
-
-# ===============================
-# LOAD COOKIES FROM SECRETS
-# ===============================
+# =========================
+# INIT
+# =========================
 try:
-    cookies = {
-        "datr": st.secrets["META_DATr"],
-        "abra_sess": st.secrets["META_ABRA_SESS"],
-        "dpr": "1.25",
-        "wd": "1536x443"
-    }
+    COOKIE = st.secrets["META_COOKIE"]
 except Exception:
-    st.error("❌ Cookies MetaAI belum di-set di secrets.toml")
+    st.error("❌ Cookie MetaAI belum di-set")
     st.stop()
 
-# ===============================
-# INIT META AI (CACHE)
-# ===============================
 @st.cache_resource
-def load_meta_ai():
-    return MetaAI(cookies=cookies)
+def load_ai():
+    return MetaAIWrapper(COOKIE)
 
-ai = load_meta_ai()
-st.success("✅ MetaAI berhasil dimuat (Vendored Mode)")
+ai = load_ai()
+st.success("✅ MetaAI wrapper siap (REAL MODE)")
 
-# ===============================
+# =========================
 # CHAT
-# ===============================
+# =========================
 st.subheader("💬 Chat")
 
-chat_prompt = st.text_area(
+prompt_chat = st.text_area(
     "Prompt Chat",
-    value="What's the weather in San Francisco?"
+    "What's the weather in San Francisco?"
 )
 
 if st.button("Kirim Chat"):
     with st.spinner("Menghubungi MetaAI..."):
         try:
-            result = ai.prompt(chat_prompt, stream=False)
+            reply = ai.chat(prompt_chat)
             st.success("Response")
-            st.write(result["message"])
+            st.write(reply)
         except Exception as e:
-            st.error(f"Chat Error: {e}")
+            st.error(str(e))
 
-# ===============================
+# =========================
 # VIDEO
-# ===============================
+# =========================
 st.subheader("🎥 Generate Video")
 
-video_prompt = st.text_input(
+prompt_video = st.text_input(
     "Prompt Video",
-    value="Generate a video of a sunset over mountains"
+    "Generate a video of a sunset over mountains"
 )
 
 if st.button("Generate Video"):
-    with st.spinner("Sedang generate video..."):
+    with st.spinner("Request video..."):
         try:
-            video = ai.generate_video(video_prompt)
+            res = ai.generate_video(prompt_video)
+            cid = res["conversation_id"]
 
-            if video.get("success"):
-                st.success("Video berhasil dibuat")
-                st.write("Conversation ID:", video["conversation_id"])
+            st.info(f"Conversation ID: {cid}")
+            st.write("Menunggu video...")
 
-                for i, url in enumerate(video["video_urls"], 1):
-                    st.markdown(f"**{i}.** [Buka Video]({url})")
+            urls = ai.poll_video(cid)
+
+            if urls:
+                st.success("🎉 Video siap!")
+                for i, u in enumerate(urls, 1):
+                    st.markdown(f"**{i}.** [Buka Video]({u})")
             else:
-                st.warning("Video masih diproses (belum ada URL)")
-        except Exception as e:
-            st.error(f"Video Error: {e}")
+                st.warning("⚠️ Video belum siap / masih diproses")
 
-st.divider()
-st.caption("Vendored MetaAI • Streamlit Cloud Safe")
+        except Exception as e:
+            st.error(str(e))
