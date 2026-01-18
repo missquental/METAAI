@@ -19,4 +19,4 @@ google-api-python-client
 requests
 gdown
 ffprobe
-metaai-api
+git+https://github.com/Strvm/metaai-api.git
